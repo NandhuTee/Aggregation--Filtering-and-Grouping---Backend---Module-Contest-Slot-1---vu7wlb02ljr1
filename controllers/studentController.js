@@ -18,17 +18,26 @@ const seedStudents = async () => {
 
 const filterAndGroupStudents = async (req, res) => {
   try {
-    // TODO: Implement the logic to filter and group students based on specific criteria
-    // 1. Define your filtering criteria for students
-    //    - Example: Find students with a score greater than or equal to 80
-    // 2. Group the filtered students by a specific attribute
-    //    - Example: Group them by 'age'
-    // 3. Calculate the count or any other aggregations needed
-    // 4. Retrieve the result and prepare it for the response
-    // TODO: Execute the logic to filter and group students
-    // TODO: Respond with the grouped result
+    const result = await Student.aggregate([
+      // Step 1: Filter students with a score >= 80
+      { $match: { score: { $gte: 80 } } },
+      
+      // Step 2: Group students by age and count them
+      {
+        $group: {
+          _id: '$age', // Grouping by age
+          students: { $push: '$$ROOT' }, // Push all student details into an array
+          count: { $sum: 1 } // Count number of students in each group
+        }
+      },
+
+      // Step 3: Sort by age (ascending order)
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    // Handle errors by responding with a 500 Internal Server Error
+    console.error('Error filtering and grouping students:', error);
     res.status(500).json({ message: 'Internal server error', error });
   }
 };
